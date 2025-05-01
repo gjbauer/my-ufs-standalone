@@ -11,9 +11,9 @@ int tree_lookup(const char* path) {
 	dirent *p0, *p1;
 lookup_loop:
 	p0 = (dirent*)((char*)get_root_start()+n->ptrs[0]);
-	if (strcmp(p0->name)!=0) printf("%s\n", p0->name);
+	//if (strcmp(p0->name, "*")!=0) printf("%s\n", p0->name);
 	p1 = (dirent*)((char*)get_root_start()+n->ptrs[1]);
-	if (strcmp(p1->name)!=0) printf("%s\n", p1->name);
+	//if (strcmp(p1->name, "*")!=0) printf("%s\n", p1->name);
 	if (!strcmp(p0->name, path)) {
 		return p0->inum;
 	} else if (!strcmp(p0->name, "*")) {

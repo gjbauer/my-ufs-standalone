@@ -16,9 +16,9 @@ int readdir()
     dirent *e1 = (dirent*)((char*)get_root_start()+n->ptrs[1]);
     while (true) {
     	if (!strcmp(e0->name, "*")) break;
-    	//rv = printf("%s\n", e0->name);
+    	rv = printf("%s\n", e0->name);	// getaddr
     	if (!strcmp(e1->name, "*")) break;
-    	//rv = printf("%s\n", e1->name);
+    	rv = printf("%s\n", e1->name);
     	if (n->iptr != 0) n = get_inode(n->iptr);
     	else return 0;
     }
@@ -30,7 +30,6 @@ mknod(const char *path)
     int rv = 0;
     int count = 0;
     int l = inode_find(path);
-    //printf("l = %d\n", l);
     inode *n = get_inode(1);
     inode *p = get_inode(0);	// TODO: Get this to point to sub-directories...have to reimplement directories... <- parent directory
     inode *h = get_inode(l);
@@ -73,8 +72,6 @@ mk_loop:
 int
 write(const char *path, const char *buf, size_t size, off_t offset)
 {
-    size+=2;
-    const char *membuf = "\0";
     int rv = 0;
     int l = tree_lookup(path);
     bool start = true;
@@ -101,8 +98,6 @@ write_loop:
     	data1 = ((char*)get_root_start()+h->ptrs[1]);
     	//data0[0]='\0';	//TODO : Worry about write collision later...
     	if (n->size[0] > 0) {
-    		printf("if\n");
-    		//strncpy(data0, membuf, 1);
     		strncpy(data0, buf, n->size[0]);
     		strncpy(data1 + (int)n->size, buf+n->size[0], n->size[1]);
     		n->size[1]=p1;
@@ -111,11 +106,7 @@ write_loop:
     		n->ptrs[1] = h->ptrs[1];
     		h->ptrs[0] += n->size[1];
     	} else {
-    		//printf("else\n");
     		strncpy(data0, buf, size);
-    		//printf("data0 = %s\n", data0);
-    		//printf("buf = %s\n", buf);
-    		//printf("h->ptrs[0] = %d\n", h->ptrs[0]);
     		n->size[0]=size;
     		n->ptrs[0] = h->ptrs[0];
     		h->ptrs[0] += size;
@@ -131,7 +122,6 @@ read(const char *path, char *buf, size_t size, off_t offset)
 {
     int rv = 4096;
     int l = tree_lookup(path);
-    //printf("l : %d\n", l);
     bool start = true;
     int p0=0, p1=0, i=0;
     inode* n = get_inode(l);
@@ -145,19 +135,15 @@ read_loop:
     		data0 = ((char*)get_root_start()+n->ptrs[0]);
     	}
     	data1 = ((char*)get_root_start()+n->ptrs[1]);
-    	//for(; p0<n->size[0] && i < size-1; p0++, i++);
-    	//printf("dirent = %d\n", sizeof(dirent));
-    	//printf("ptrs[0] = %d\n", n->ptrs[0]);
-    	strncpy(buf, data0, n->size[0]-1);
-    	//for(; p1<n->size[1] && i < size-1; p1++, i++);
+    	// TODO : Bounds checking
+    	strncpy(buf, data0, n->size[0]);
     	strncat(buf, data1, n->size[1]);
-    	/*if (i < size-1) {
+    	/*if (n->size[0] + n->size[1] < size) {
     		n = get_inode(n->iptr);
     		goto read_loop;
     	}*/
     	rv = i;
     }
-    //printf("buf : %s\n", buf);
     printf("read(%s, %ld bytes, @+%ld) -> %d\n", path, size, offset, rv);
     return rv;
 }
@@ -167,11 +153,11 @@ main(int argc, char *argv[])
 {
 	char buf[256];
 	storage_init("data.nufs");
-	readdir();
+	readdir();	// Empty
 	mknod("/hello.txt");
 	readdir();
 	write("/hello.txt", "hello!", 6, 0);
 	read("/hello.txt", buf, 0, 0);
-	printf("%s\n", buf);
+	printf("%s\n", buf);	// hello!
 	pages_free();
 }
