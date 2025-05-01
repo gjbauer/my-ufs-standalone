@@ -18,4 +18,7 @@ Things that need to be worked on:
 	* It has no real permission model
 	* Only one block (2MB) is pressumed, no superblocks
 	* Hard links
-	
+
+Read More:
+
+ [The UNIX Filesystem](https://www.dgp.toronto.edu/~kenxu/csc209/unixfilesystem-wk1.pdf)
