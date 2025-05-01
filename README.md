@@ -11,6 +11,7 @@ not with FUSE. It kept freezing and would not unmount without rebooting.
 Anyways, here is the beginnings of a reference implementation of UFS.
 
 Things that need to be worked on:
+
 	* It needs to be able to use single level directories
 	* After that, it needs to be able multi-level directories
 	* It has no timestamps
