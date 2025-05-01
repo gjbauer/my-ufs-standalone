@@ -18,6 +18,8 @@ Things that need to be worked on:
 	* It has no real permission model
 	* Only one block (2MB) is pressumed, no superblocks
 	* Hard links
+ 
+![](screen.png)
 
 Read More:
 
