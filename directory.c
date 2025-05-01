@@ -29,7 +29,7 @@ lookup_loop:
 	return -ENOENT;
 }
 int directory_put(inode* dd, const char* name, int inum) {
-	dirent* d = malloc(sizeof(dirent*));
+	/*dirent* d = malloc(sizeof(dirent*));
 	strcpy(d->name, name);
 	d->inum = inum;
 	dirent *ent = (dirent*)get_root_start();
@@ -38,7 +38,7 @@ int directory_put(inode* dd, const char* name, int inum) {
 		else *ent++;
 	}
 	if (!ent) return -1;
-	memcpy(ent, &d, sizeof(d));
+	memcpy(ent, &d, sizeof(d));*/
 	return 0;
 }
 
