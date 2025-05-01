@@ -13,6 +13,7 @@ Anyways, here is the beginnings of a reference implementation of UFS.
 Things that need to be worked on:
 
 	* It needs to be able to use single level directories
+		- Partially complete, we can create a directory and reference it, but can't place files in them
 	* After that, it needs to be able to support multi-level directories
 	* It has no timestamps
 	* It has no real permission model

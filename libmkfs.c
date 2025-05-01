@@ -46,6 +46,7 @@ mkfs() {
 	ptr->ptrs[0] = sizeof(root);	// What if instead we tracked pointers relative to the start of data, so as to account for different memory mappings?
 	ptr->ptrs[1] = sizeof(root);	// We can set this when we unlink/remove a file
 	mkstop();
+	ptr = get_inode(0);
 	pages_free();
 }
 

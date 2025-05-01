@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include "pages.h"
 #include "inode.h"
 #include "bitmap.h"
@@ -7,25 +8,52 @@
 
 dirent stop;
 
+char *split(const char *path, int n) {
+	int rv=0;
+	char *splt = (char*)calloc(DIR_NAME, sizeof(char));
+	if (n==0) {
+		strcpy(splt, "/");
+	} else {
+		int c=0, i=0;
+		for (; path[i] && c<n+1; i++) {
+			splt[i]=path[i];
+			if (path[i]=='/') c++;
+		}
+		if (splt[i-1]=='/') splt[i-1]='\0';
+	}
+	return splt;
+}
+
+int
+count_l(const char *path) {
+	int c=0;
+	for(int i=0; path[i]; i++) {
+		if (path[i]=='/') c++;
+	}
+	return c;
+}
+
 int readdir()
 {
-    int rv;
+    int rv=0;
     
     inode* n = get_inode(0);
+    
     dirent *e0 = (dirent*)((char*)get_root_start()+n->ptrs[0]);
     dirent *e1 = (dirent*)((char*)get_root_start()+n->ptrs[1]);
     while (true) {
     	if (!strcmp(e0->name, "*")) break;
-    	rv = printf("%s\n", e0->name);	// getaddr
+    	printf("%s\n", e0->name);	// getaddr
     	if (!strcmp(e1->name, "*")) break;
-    	rv = printf("%s\n", e1->name);
+    	printf("%s\n", e1->name);
     	if (n->iptr != 0) n = get_inode(n->iptr);
     	else return 0;
     }
+    printf("readdir(%d)\n", rv);
 }
 
 int
-mknod(const char *path)
+mknod(const char *path, int mode)
 {
     int rv = 0;
     int count = 0;
@@ -37,7 +65,7 @@ mknod(const char *path)
     dirent data;
     data.inum=l;
     strcpy(data.name, path);
-    //n->mode=mode;
+    h->mode=mode;
     data.active=true;
 mk_loop:
 	p0 = (dirent*)((char*)get_root_start()+p->ptrs[0]);
@@ -50,9 +78,9 @@ mk_loop:
 		p->ptrs[1] = n->ptrs[0];
 		n->ptrs[0] + sizeof(stop);
 		memcpy(w, &stop, sizeof(stop));	
-	} else if (!strcmp(p0->name, "")) {
+	} else if (p0->active==false) {
 		memcpy(p0, &data, sizeof(data));
-	} else if (!strcmp(p1->name, "")) {
+	} else if (p1->active==false) {
 		memcpy(p1, &data, sizeof(data));
 	} else if (!strcmp(p1->name, "*")) {
 		memcpy(p1, &data, sizeof(data));
@@ -71,10 +99,10 @@ mk_loop:
 // most of the following callbacks implement
 // another system call; see section 2 of the manual
 int
-mkdir(const char *path, mode_t mode)
+mkdir(const char *path, int mode)
 {
-    int rv = mknod(path, mode | 040000, 0);
-    printf("%d\n", count_l(path));
+    int rv = mknod(path, mode | 040000);
+    //printf("%d\n", count_l(path));
     // TODO: Nested Directories
     /*for (int i=0; i<count_l(path)) {
     }*/
@@ -156,7 +184,6 @@ read_loop:
     		n = get_inode(n->iptr);
     		goto read_loop;
     	}*/
-    	rv = i;
     }
     printf("read(%s, %ld bytes, @+%ld) -> %d\n", path, size, offset, rv);
     return rv;
@@ -168,10 +195,12 @@ main(int argc, char *argv[])
 	char buf[256];
 	storage_init("data.nufs");
 	readdir();	// Empty
-	mknod("/hello.txt");
+	mknod("/hello.txt", 755);
 	readdir();
 	write("/hello.txt", "hello!", 6, 0);
 	read("/hello.txt", buf, 0, 0);
+	mkdir("/dir", 755);
+	readdir();
 	printf("%s\n", buf);	// hello!
 	pages_free();
 }
