@@ -5,17 +5,15 @@
 #include <stdlib.h>
 #include <errno.h>
 
-//void directory_init() {}
-//int directory_lookup(inode* dd, const char* name) {}
 int tree_lookup(const char* path) {
 	if (!strcmp(path, "/")) return 0;
 	inode *n = get_inode(0);
 	dirent *p0, *p1;
 lookup_loop:
 	p0 = (dirent*)((char*)get_root_start()+n->ptrs[0]);
-	//printf("%s\n", p0->name);
+	if (strcmp(p0->name)!=0) printf("%s\n", p0->name);
 	p1 = (dirent*)((char*)get_root_start()+n->ptrs[1]);
-	//printf("%s\n", p1->name);
+	if (strcmp(p1->name)!=0) printf("%s\n", p1->name);
 	if (!strcmp(p0->name, path)) {
 		return p0->inum;
 	} else if (!strcmp(p0->name, "*")) {
@@ -43,6 +41,4 @@ int directory_put(inode* dd, const char* name, int inum) {
 	memcpy(ent, &d, sizeof(d));
 	return 0;
 }
-//int directory_delete(inode* dd, const char* name) {}
-//slist* directory_list(const char* path) {}
-//void print_directory(inode* dd) {}
+
