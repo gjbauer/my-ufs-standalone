@@ -68,6 +68,20 @@ mk_loop:
     return rv;
 }
 
+// most of the following callbacks implement
+// another system call; see section 2 of the manual
+int
+mkdir(const char *path, mode_t mode)
+{
+    int rv = mknod(path, mode | 040000, 0);
+    printf("%d\n", count_l(path));
+    // TODO: Nested Directories
+    /*for (int i=0; i<count_l(path)) {
+    }*/
+    printf("mkdir(%s) -> %d\n", path, rv);
+    return rv;
+}
+
 // Actually write data
 int
 write(const char *path, const char *buf, size_t size, off_t offset)
