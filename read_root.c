@@ -34,30 +34,23 @@ count_l(const char *path) {
 	return c;
 }
 
-char*
-trim(const char *path)
+int
+find_parent(const char *path)
 {
+	char trm[DIR_NAME];
 	char *trm = (char*)malloc(DIR_NAME * sizeof(char));
 	int i;
 	for(i=0; path[i]; i++) trm[i]=path[i];
 	if (trm[i]=='/') trm[i]='\0';
-	return trm;
-}
-
-int
-find_parent(const char *path)
-{
-	char *tmpath = trim(path);
 	char *ptr;
-	int k = count_l(tmpath);
+	int k = count_l(trm);
 	int n=0;
 	for (int i=0; i<k; i++) {
-		ptr = split(tmpath, i);
+		ptr = split(trm, i);
 		n = tree_lookup(ptr, n);
 		if (n<0) return -ENOENT;
 	}
 	// TODO : Locate a parent directory and return an inode, or an iptr
-	free(tmpath);
 	free(ptr);
 	return n;
 }
