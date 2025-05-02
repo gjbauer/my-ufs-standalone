@@ -149,7 +149,7 @@ int
 write(const char *path, const char *buf, size_t size, off_t offset)
 {
     int rv = 0;
-    int l = tree_lookup(path, 0);
+    int l = tree_lookup(path, find_parent(path));
     bool start = true;
     int p0=0, p1=0, i=0;
     inode* n = get_inode(l);
