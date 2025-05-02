@@ -9,20 +9,19 @@
 
 dirent stop;
 
-char *split(const char *path, int n) {
+int split(const char *path, int n, char buf[DIR_NAME]) {
 	int rv=0;
-	char *splt = (char*)calloc(DIR_NAME, sizeof(char));
 	if (n==0) {
-		strcpy(splt, "/");
+		strcpy(buf, "/");
 	} else {
 		int c=0, i=0;
 		for (; path[i] && c<n+1; i++) {
-			splt[i]=path[i];
+			buf[i]=path[i];
 			if (path[i]=='/') c++;
 		}
-		if (splt[i-1]=='/') splt[i-1]='\0';
+		if (buf[i-1]=='/') buf[i-1]='\0';
 	}
-	return splt;
+	return rv;
 }
 
 int
@@ -42,11 +41,11 @@ find_parent(const char *path)
 	int i;
 	for(i=0; path[i]; i++) trm[i]=path[i];
 	if (trm[i]=='/') trm[i]='\0';
-	char *ptr;
+	char ptr[DIR_NAME];
 	int k = count_l(trm);
 	int n=0;
 	for (int i=0; i<k; i++) {
-		ptr = split(trm, i);
+		split(trm, i, ptr);
 		n = tree_lookup(ptr, n);
 		if (n<0) return -ENOENT;
 	}
