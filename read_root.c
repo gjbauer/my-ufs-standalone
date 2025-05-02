@@ -38,10 +38,12 @@ int readdir()
     int rv=0;
     
     inode* n = get_inode(0);
+    dirent *e0;
+    dirent *e1;
     
-    dirent *e0 = (dirent*)((char*)get_root_start()+n->ptrs[0]);
-    dirent *e1 = (dirent*)((char*)get_root_start()+n->ptrs[1]);
     while (true) {
+    	e0 = (dirent*)((char*)get_root_start()+n->ptrs[0]);
+    	e1 = (dirent*)((char*)get_root_start()+n->ptrs[1]);
     	if (!strcmp(e0->name, "*")) break;
     	printf("%s\n", e0->name);	// getaddr
     	if (!strcmp(e1->name, "*")) break;
@@ -76,7 +78,7 @@ mk_loop:
 		strcpy(stop.name, "*");
 		memcpy(p0, &data, sizeof(data));
 		p->ptrs[1] = n->ptrs[0];
-		n->ptrs[0] + sizeof(stop);
+		n->ptrs[0] += sizeof(stop);
 		memcpy(w, &stop, sizeof(stop));	
 	} else if (p0->active==false) {
 		memcpy(p0, &data, sizeof(data));
@@ -117,7 +119,7 @@ write(const char *path, const char *buf, size_t size, off_t offset)
     int rv = 0;
     int l = tree_lookup(path);
     bool start = true;
-    int p0=1, p1=0, i=0;
+    int p0=0, p1=0, i=0;
     inode* n = get_inode(l);
     inode* h = get_inode(1);
     char *data0, *data1;
@@ -199,8 +201,8 @@ main(int argc, char *argv[])
 	readdir();
 	write("/hello.txt", "hello!", 6, 0);
 	read("/hello.txt", buf, 0, 0);
-	mkdir("/dir", 755);
+	//mkdir("/dir", 755);
 	readdir();
-	printf("%s\n", buf);	// hello!
+	//printf("%s\n", buf);	// hello!
 	pages_free();
 }
