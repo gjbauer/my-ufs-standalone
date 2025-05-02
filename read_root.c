@@ -241,5 +241,12 @@ main(int argc, char *argv[])
 	write("/dir/newmsg.txt", "newmsg!", 6, 0);
 	read("/dir/newmsg.txt", buf, 0, 0);
 	printf("%s\n", buf);	// newmsg!
+	mknod("/dir/two.txt", 755);
+	write("/dir/two.txt", "two!", 6, 0);
+	read("/dir/two.txt", buf, 0, 0);
+	printf("%s\n", buf);	// two!
+	readdir("/dir");
+	mkdir("/dir/dir", 755);
+	readdir("/dir");
 	pages_free();
 }
