@@ -33,6 +33,12 @@ count_l(const char *path) {
 	return c;
 }
 
+int
+find_parent(const char *path)
+{
+	// TODO : Locate a parent directory and return an inode, or an iptr
+}
+
 int readdir()
 {
     int rv=0;
