@@ -33,10 +33,22 @@ count_l(const char *path) {
 	return c;
 }
 
+char*
+trim(const char *path)
+{
+	char trm = malloc(DIR_NAME * sizeof(char));
+	int i;
+	for(i=0; path[i]; i++) trm[i]=path[i];
+	if (path[i]=='/') path[i]='\0'
+	return trm;
+}
+
 int
 find_parent(const char *path)
 {
+	char tmpath = trim(path);
 	// TODO : Locate a parent directory and return an inode, or an iptr
+	free(tmpath);
 }
 
 int readdir()
