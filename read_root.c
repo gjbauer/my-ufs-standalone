@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <errno.h>
 #include "pages.h"
 #include "inode.h"
 #include "bitmap.h"
@@ -36,26 +37,38 @@ count_l(const char *path) {
 char*
 trim(const char *path)
 {
-	char trm = malloc(DIR_NAME * sizeof(char));
+	char *trm = (char*)malloc(DIR_NAME * sizeof(char));
 	int i;
 	for(i=0; path[i]; i++) trm[i]=path[i];
-	if (path[i]=='/') path[i]='\0'
+	if (trm[i]=='/') trm[i]='\0';
 	return trm;
 }
 
 int
 find_parent(const char *path)
 {
-	char tmpath = trim(path);
+	char *tmpath = trim(path);
+	char *ptr;
+	int k = count_l(tmpath);
+	int n=0;
+	for (int i=0; i<k; i++) {
+		ptr = split(tmpath, i);
+		n = tree_lookup(ptr, n);
+		if (n<0) return -ENOENT;
+	}
 	// TODO : Locate a parent directory and return an inode, or an iptr
 	free(tmpath);
+	free(ptr);
+	return n;
 }
 
-int readdir()
+int readdir(const char *path)
 {
     int rv=0;
+    int l = find_parent(path);
+    l = tree_lookup(path, l);
     
-    inode* n = get_inode(0);
+    inode* n = get_inode(l);
     dirent *e0;
     dirent *e1;
     
@@ -79,7 +92,8 @@ mknod(const char *path, int mode)
     int count = 0;
     int l = inode_find(path);
     inode *n = get_inode(1);
-    inode *p = get_inode(0);	// TODO: Get this to point to sub-directories...have to reimplement directories... <- parent directory
+    printf("find_parent(path) = %d\n", find_parent(path));
+    inode *p = get_inode(find_parent(path));	// <- parent directory
     inode *h = get_inode(l);
     dirent *p0, *p1, *w;
     dirent data;
@@ -135,7 +149,7 @@ int
 write(const char *path, const char *buf, size_t size, off_t offset)
 {
     int rv = 0;
-    int l = tree_lookup(path);
+    int l = tree_lookup(path, 0);
     bool start = true;
     int p0=0, p1=0, i=0;
     inode* n = get_inode(l);
@@ -183,7 +197,8 @@ int
 read(const char *path, char *buf, size_t size, off_t offset)
 {
     int rv = 4096;
-    int l = tree_lookup(path);
+    int l = find_parent(path);
+    l = tree_lookup(path, l);
     bool start = true;
     int p0=0, p1=0, i=0;
     inode* n = get_inode(l);
@@ -214,13 +229,17 @@ main(int argc, char *argv[])
 {
 	char buf[256];
 	storage_init("data.nufs");
-	readdir();	// Empty
+	readdir("/");	// Empty
 	mknod("/hello.txt", 755);
-	readdir();
+	readdir("/");
+	mkdir("/dir", 755);
 	write("/hello.txt", "hello!", 6, 0);
 	read("/hello.txt", buf, 0, 0);
-	//mkdir("/dir", 755);
-	readdir();
-	//printf("%s\n", buf);	// hello!
+	printf("%s\n", buf);	// hello!
+	readdir("/");
+	mknod("/dir/newmsg.txt", 755);
+	write("/dir/newmsg.txt", "newmsg!", 6, 0);
+	read("/dir/newmsg.txt", buf, 0, 0);
+	printf("%s\n", buf);	// newmsg!
 	pages_free();
 }

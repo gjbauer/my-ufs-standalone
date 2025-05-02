@@ -5,18 +5,18 @@
 #include <stdlib.h>
 #include <errno.h>
 
-int tree_lookup(const char* path) {
-	if (!strcmp(path, "/")) return 0;
-	inode *n = get_inode(0);
+int tree_lookup(const char* subpath, int i) {
+	if (!strcmp(subpath, "/")) return 0;
+	inode *n = get_inode(i);
 	dirent *p0, *p1;
 lookup_loop:
 	p0 = (dirent*)((char*)get_root_start()+n->ptrs[0]);
 	p1 = (dirent*)((char*)get_root_start()+n->ptrs[1]);
-	if (!strcmp(p0->name, path)) {
+	if (!strcmp(p0->name, subpath)) {
 		return p0->inum;
 	} else if (!strcmp(p0->name, "*")) {
 		return -ENOENT;
-	} else if (!strcmp(p1->name, path)) {
+	} else if (!strcmp(p1->name, subpath)) {
 		return p1->inum;
 	} else if (!strcmp(p1->name, "*")) {
 		return -ENOENT;
