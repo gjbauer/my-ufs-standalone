@@ -91,7 +91,7 @@ mk_loop:
 		n->ptrs[0] += sizeof(data);
 		memcpy(w, &data, sizeof(data));
 	} else {
-		n = get_inode(n->iptr);
+		p = get_inode(p->iptr);
 		goto mk_loop;
 	}
     printf("mknod(%s) -> %d\n", path, rv);
