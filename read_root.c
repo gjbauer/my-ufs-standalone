@@ -37,7 +37,6 @@ int
 find_parent(const char *path)
 {
 	char trm[DIR_NAME];
-	char *trm = (char*)malloc(DIR_NAME * sizeof(char));
 	int i;
 	for(i=0; path[i]; i++) trm[i]=path[i];
 	if (trm[i]=='/') trm[i]='\0';
@@ -50,11 +49,11 @@ find_parent(const char *path)
 		if (n<0) return -ENOENT;
 	}
 	// TODO : Locate a parent directory and return an inode, or an iptr
-	free(ptr);
 	return n;
 }
 
-int readdir(const char *path)
+int
+readdir(const char *path)
 {
     int rv=0;
     int l = find_parent(path);
@@ -167,7 +166,7 @@ write_loop:
     	//data0[0]='\0';	//TODO : Worry about write collision later...
     	if (n->size[0] > 0) {
     		strncpy(data0, buf, n->size[0]);
-    		strncpy(data1 + (int)n->size, buf+n->size[0], n->size[1]);
+    		strncat(data1 + (int)n->size, buf+n->size[0], n->size[1]);
     		n->size[1]=p1;
     		n->ptrs[0] = h->ptrs[0];
     		h->ptrs[0] += n->size[0];
