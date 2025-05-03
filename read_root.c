@@ -55,46 +55,46 @@ find_parent(const char *path)
 int
 readdir(const char *path)
 {
-    int rv=0;
-    int l = find_parent(path);
-    l = tree_lookup(path, l);
-    
-    inode* n = get_inode(l);
-    dirent *e0;
-    dirent *e1;
-    
-    while (true) {
-    	e0 = (dirent*)((char*)get_root_start()+n->ptrs[0]);
-    	e1 = (dirent*)((char*)get_root_start()+n->ptrs[1]);
-    	printf("%s\n", e0->name);	// getaddr
-    	if (!strcmp(e0->name, "*")) break;
-    	//printf("%s\n", e0->name);	// getaddr
-    	printf("%s\n", e1->name);
-    	if (!strcmp(e1->name, "*")) break;
-    	//printf("%s\n", e1->name);
-    	printf("readdir: getting next inode!\n");
-    	n = get_inode(n->iptr);
-    }
-    printf("readdir(%d)\n", rv);
-    return rv;
+	int rv=0;
+	int l = find_parent(path);
+	l = tree_lookup(path, l);
+	
+	inode* n = get_inode(l);
+	dirent *e0;
+	dirent *e1;
+	
+	while (true) {
+		e0 = (dirent*)((char*)get_root_start()+n->ptrs[0]);
+		e1 = (dirent*)((char*)get_root_start()+n->ptrs[1]);
+		printf("%s\n", e0->name);	// getaddr
+		if (!strcmp(e0->name, "*")) break;
+		//printf("%s\n", e0->name);	// getaddr
+		printf("%s\n", e1->name);
+		if (!strcmp(e1->name, "*")) break;
+		//printf("%s\n", e1->name);
+		printf("readdir: getting next inode!\n");
+		n = get_inode(n->iptr);
+	}
+	printf("readdir(%d)\n", rv);
+	return rv;
 }
 
 int
 _mknod(const char *path, int mode, int k)
 {
-    int rv = 0;
-    int count = 0;
-    int l = inode_find(path);
-    inode *n = get_inode(1);
-    printf("find_parent(path) = %d\n", find_parent(path));
-    inode *p = get_inode(k);	// <- parent directory
-    inode *h = get_inode(l);
-    dirent *p0, *p1, *w;
-    dirent data;
-    data.inum=l;
-    strcpy(data.name, path);
-    h->mode=mode;
-    data.active=true;
+	int rv = 0;
+	int count = 0;
+	int l = inode_find(path);
+	inode *n = get_inode(1);
+	printf("find_parent(path) = %d\n", find_parent(path));
+	inode *p = get_inode(k);	// <- parent directory
+	inode *h = get_inode(l);
+	dirent *p0, *p1, *w;
+	dirent data;
+	data.inum=l;
+	strcpy(data.name, path);
+	h->mode=mode;
+	data.active=true;
 	p0 = (dirent*)((char*)get_root_start()+p->ptrs[0]);
 	p1 = (dirent*)((char*)get_root_start()+p->ptrs[1]);
 	w = (dirent*)((char*)get_root_start()+n->ptrs[0]);
@@ -123,8 +123,8 @@ _mknod(const char *path, int mode, int k)
 		_mknod(path, mode, p->iptr);
 	}
 	printf("p1: %s\n", p1->name);
-    printf("mknod(%s) -> %d\n", path, rv);
-    return rv;
+	printf("mknod(%s) -> %d\n", path, rv);
+	return rv;
 }
 
 int
@@ -138,95 +138,95 @@ mknod(const char *path, int mode)
 int
 mkdir(const char *path, int mode)
 {
-    int rv = mknod(path, mode | 040000);
-    //printf("%d\n", count_l(path));
-    // TODO: Nested Directories
-    /*for (int i=0; i<count_l(path)) {
-    }*/
-    printf("mkdir(%s) -> %d\n", path, rv);
-    return rv;
+	int rv = mknod(path, mode | 040000);
+	//printf("%d\n", count_l(path));
+	// TODO: Nested Directories
+	/*for (int i=0; i<count_l(path)) {
+	}*/
+	printf("mkdir(%s) -> %d\n", path, rv);
+	return rv;
 }
 
 // Actually write data
 int
 write(const char *path, const char *buf, size_t size, off_t offset)
 {
-    int rv = 0;
-    int l = tree_lookup(path, find_parent(path));
-    bool start = true;
-    int p0=0, p1=0, i=0;
-    inode* n = get_inode(l);
-    inode* h = get_inode(1);
-    char *data0, *data1;
-    int i0, i1;
+	int rv = 0;
+	int l = tree_lookup(path, find_parent(path));
+	bool start = true;
+	int p0=0, p1=0, i=0;
+	inode* n = get_inode(l);
+	inode* h = get_inode(1);
+	char *data0, *data1;
+	int i0, i1;
 write_loop:
-    if (start) {
-    	data0 = ((char*)get_root_start()+h->ptrs[0]+offset);
-    	start = false;
-    } else {
-    	data0 = ((char*)get_root_start()+h->ptrs[0]);
-    }
-    if (offset > n->size[0]) {
-    	offset -= n->size[0];
-    	data1 = ((char*)get_root_start()+h->ptrs[1]+offset);
-    	for(; i < size; p0++, i++) data0[p0] = buf[i];
-    	n->size[0]=p0;
-    	n->ptrs[0] = h->ptrs[0];
-    	h->ptrs[0] += size;
-    } else {
-    	data1 = ((char*)get_root_start()+h->ptrs[1]);
-    	//data0[0]='\0';	//TODO : Worry about write collision later...
-    	if (n->size[0] > 0) {
-    		strncpy(data0, buf, n->size[0]);
-    		strncat(data1 + (int)n->size[0], buf+n->size[0], n->size[1]);
-    		strncat(data1 + (int)n->size[0] + (int)n->size[1], "\0", 1);
-    		n->size[1]=p1;
-    		n->ptrs[0] = h->ptrs[0];
-    		h->ptrs[0] += n->size[0];
-    		n->ptrs[1] = h->ptrs[1];
-    		h->ptrs[0] += n->size[1];
-    	} else {
-    		strncpy(data0, buf, size);
-    		strncat(data0, "\0", 1);
-    		n->size[0]=size;
-    		n->ptrs[0] = h->ptrs[0];
-    		h->ptrs[0] += size;
-    	}
-    }
-    printf("write(%s, %ld bytes, @+%ld) -> %d\n", path, size, offset, rv);
-    return rv;
+	if (start) {
+		data0 = ((char*)get_root_start()+h->ptrs[0]+offset);
+		start = false;
+	} else {
+		data0 = ((char*)get_root_start()+h->ptrs[0]);
+	}
+	if (offset > n->size[0]) {
+		offset -= n->size[0];
+		data1 = ((char*)get_root_start()+h->ptrs[1]+offset);
+		for(; i < size; p0++, i++) data0[p0] = buf[i];
+		n->size[0]=p0;
+		n->ptrs[0] = h->ptrs[0];
+		h->ptrs[0] += size;
+	} else {
+		data1 = ((char*)get_root_start()+h->ptrs[1]);
+		//data0[0]='\0';	//TODO : Worry about write collision later...
+		if (n->size[0] > 0) {
+			strncpy(data0, buf, n->size[0]);
+			strncat(data1 + (int)n->size[0], buf+n->size[0], n->size[1]);
+			strncat(data1 + (int)n->size[0] + (int)n->size[1], "\0", 1);
+			n->size[1]=p1;
+			n->ptrs[0] = h->ptrs[0];
+			h->ptrs[0] += n->size[0];
+			n->ptrs[1] = h->ptrs[1];
+			h->ptrs[0] += n->size[1];
+		} else {
+			strncpy(data0, buf, size);
+			strncat(data0, "\0", 1);
+			n->size[0]=size;
+			n->ptrs[0] = h->ptrs[0];
+			h->ptrs[0] += size;
+		}
+	}
+	printf("write(%s, %ld bytes, @+%ld) -> %d\n", path, size, offset, rv);
+	return rv;
 }
 
 // Actually read data
 int
 read(const char *path, char *buf, size_t size, off_t offset)
 {
-    int rv = 4096;
-    int l = find_parent(path);
-    l = tree_lookup(path, l);
-    bool start = true;
-    int p0=0, p1=0, i=0;
-    inode* n = get_inode(l);
-    char *data0, *data1;
-    if (l>-1) {
+	int rv = 4096;
+	int l = find_parent(path);
+	l = tree_lookup(path, l);
+	bool start = true;
+	int p0=0, p1=0, i=0;
+	inode* n = get_inode(l);
+	char *data0, *data1;
+	if (l>-1) {
 read_loop:
-    	if (start) {
-    		data0 = ((char*)get_root_start()+n->ptrs[0]+offset);
-    		start = false;
-    	} else {
-    		data0 = ((char*)get_root_start()+n->ptrs[0]);
-    	}
-    	data1 = ((char*)get_root_start()+n->ptrs[1]);
-    	// TODO : Bounds checking
-    	strncpy(buf, data0, n->size[0]);
-    	strncat(buf, data1, n->size[1]);
-    	/*if (n->size[0] + n->size[1] < size) {
-    		n = get_inode(n->iptr);
-    		goto read_loop;
-    	}*/
-    }
-    printf("read(%s, %ld bytes, @+%ld) -> %d\n", path, size, offset, rv);
-    return rv;
+		if (start) {
+			data0 = ((char*)get_root_start()+n->ptrs[0]+offset);
+			start = false;
+		} else {
+			data0 = ((char*)get_root_start()+n->ptrs[0]);
+		}
+		data1 = ((char*)get_root_start()+n->ptrs[1]);
+		// TODO : Bounds checking
+		strncpy(buf, data0, n->size[0]);
+		strncat(buf, data1, n->size[1]);
+		/*if (n->size[0] + n->size[1] < size) {
+			n = get_inode(n->iptr);
+			goto read_loop;
+		}*/
+	}
+	printf("read(%s, %ld bytes, @+%ld) -> %d\n", path, size, offset, rv);
+	return rv;
 }
 
 int
