@@ -66,14 +66,17 @@ readdir(const char *path)
     while (true) {
     	e0 = (dirent*)((char*)get_root_start()+n->ptrs[0]);
     	e1 = (dirent*)((char*)get_root_start()+n->ptrs[1]);
-    	if (!strcmp(e0->name, "*")) break;
     	printf("%s\n", e0->name);	// getaddr
-    	if (!strcmp(e1->name, "*")) break;
+    	if (!strcmp(e0->name, "*")) break;
+    	//printf("%s\n", e0->name);	// getaddr
     	printf("%s\n", e1->name);
-    	if (n->iptr != 0) n = get_inode(n->iptr);
-    	else return 0;
+    	if (!strcmp(e1->name, "*")) break;
+    	//printf("%s\n", e1->name);
+    	printf("readdir: getting next inode!\n");
+    	n = get_inode(n->iptr);
     }
     printf("readdir(%d)\n", rv);
+    return rv;
 }
 
 int
@@ -101,26 +104,27 @@ mk_loop:
 		strcpy(stop.name, "*");
 		memcpy(p0, &data, sizeof(data));
 		p->ptrs[1] = n->ptrs[0];
-		n->ptrs[0] += sizeof(stop);
-		memcpy(w, &stop, sizeof(stop));	
-	} else if (p0->active==false) {
+		memcpy(w, &stop, sizeof(stop));
+		n->ptrs[0] += sizeof(stop);	
+	} /*else if (p0->active==false) {
 		printf("p0: found empty!\n");
 		memcpy(p0, &data, sizeof(data));
 	} else if (p1->active==false) {
 		printf("p1: found empty!\n");
 		memcpy(p1, &data, sizeof(data));
-	} else if (!strcmp(p1->name, "*")) {
-		printf("p1: found empty!\n");
+	} else*/ if (!strcmp(p1->name, "*")) {
+		printf("p1: found stop!\n");
 		memcpy(p1, &data, sizeof(data));
-		if (n->iptr==0) n->iptr = inode_find("*");
-		get_inode(n->iptr)->ptrs[0] = n->ptrs[0];
+		p->iptr = inode_find("*");
+		get_inode(p->iptr)->ptrs[0] = n->ptrs[0];
 		n->ptrs[0] += sizeof(data);
-		memcpy(w, &data, sizeof(data));
-	} else {
+		memcpy(w, &stop, sizeof(stop));
+	} /*else {
 		printf("found none, getting next inode!\n");
 		p = get_inode(p->iptr);
 		goto mk_loop;
-	}
+	}*/
+	printf("p1: %s\n", p1->name);
     printf("mknod(%s) -> %d\n", path, rv);
     return rv;
 }
@@ -231,20 +235,24 @@ main(int argc, char *argv[])
 	readdir("/");
 	mkdir("/dir", 755);
 	write("/hello.txt", "hello!", 6, 0);
+	readdir("/");
 	read("/hello.txt", buf, 0, 0);
 	printf("%s\n", buf);	// hello!
+	//mknod("/dir/newmsg.txt", 755);
+	//write("/dir/newmsg.txt", "newmsg!", 6, 0);
+	//read("/dir/newmsg.txt", buf, 0, 0);
+	printf("reading root\n");
 	readdir("/");
-	mknod("/dir/newmsg.txt", 755);
-	write("/dir/newmsg.txt", "newmsg!", 6, 0);
-	read("/dir/newmsg.txt", buf, 0, 0);
-	printf("%s\n", buf);	// newmsg!
-	mknod("/dir/two.txt", 755);
-	write("/dir/two.txt", "two!", 6, 0);
-	read("/dir/two.txt", buf, 0, 0);
-	printf("%s\n", buf);	// two!
+	printf("reading /dir\n");
 	readdir("/dir");
-	mkdir("/dir/dir", 755);
-	readdir("/dir");
+	//printf("%s\n", buf);	// newmsg!
+	//mknod("/dir/two.txt", 755);
+	//write("/dir/two.txt", "two!", 6, 0);
+	//read("/dir/two.txt", buf, 0, 0);
+	//printf("%s\n", buf);	// two!
+	//readdir("/dir");
+	//mkdir("/dir/dir", 755);
+	//readdir("/dir");
 	//read("/hello.txt", buf, 0, 0);
 	//printf("%s\n", buf);	// hello!
 	pages_free();
