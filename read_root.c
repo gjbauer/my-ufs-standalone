@@ -6,6 +6,7 @@
 #include "inode.h"
 #include "bitmap.h"
 #include "directory.h"
+#include "mkfs.h"
 
 dirent stop;
 
@@ -122,7 +123,6 @@ _mknod(const char *path, int mode, int k)
 		printf("found none, getting next inode!\n");
 		_mknod(path, mode, p->iptr);
 	}
-	printf("p1: %s\n", p1->name);
 	printf("mknod(%s) -> %d\n", path, rv);
 	return rv;
 }
@@ -133,18 +133,10 @@ mknod(const char *path, int mode)
 	return _mknod(path, mode, find_parent(path));
 }
 
-// most of the following callbacks implement
-// another system call; see section 2 of the manual
 int
-mkdir(const char *path, int mode)
+is_dir(int mode)
 {
-	int rv = mknod(path, mode | 040000);
-	//printf("%d\n", count_l(path));
-	// TODO: Nested Directories
-	/*for (int i=0; i<count_l(path)) {
-	}*/
-	printf("mkdir(%s) -> %d\n", path, rv);
-	return rv;
+	return ((040000 ^ mode) < 010000) ? true : false;
 }
 
 // Actually write data
@@ -159,7 +151,6 @@ write(const char *path, const char *buf, size_t size, off_t offset)
 	inode* h = get_inode(1);
 	char *data0, *data1;
 	int i0, i1;
-write_loop:
 	if (start) {
 		data0 = ((char*)get_root_start()+h->ptrs[0]+offset);
 		start = false;
@@ -179,7 +170,7 @@ write_loop:
 		if (n->size[0] > 0) {
 			strncpy(data0, buf, n->size[0]);
 			strncat(data1 + (int)n->size[0], buf+n->size[0], n->size[1]);
-			strncat(data1 + (int)n->size[0] + (int)n->size[1], "\0", 1);
+			data1[n->size[0] + n->size[1]] = '\0';
 			n->size[1]=p1;
 			n->ptrs[0] = h->ptrs[0];
 			h->ptrs[0] += n->size[0];
@@ -187,7 +178,7 @@ write_loop:
 			h->ptrs[0] += n->size[1];
 		} else {
 			strncpy(data0, buf, size);
-			strncat(data0, "\0", 1);
+			data0[size] = '\0';
 			n->size[0]=size;
 			n->ptrs[0] = h->ptrs[0];
 			h->ptrs[0] += size;
@@ -229,6 +220,22 @@ read_loop:
 	return rv;
 }
 
+// most of the following callbacks implement
+// another system call; see section 2 of the manual
+int
+mkdir(const char *path, int mode)
+{
+	int rv = mknod(path, mode | 040000);
+	//printf("%d\n", count_l(path));
+	strcpy(stop.name, "*");
+	write(path, (char*)&stop, sizeof(stop), 0);
+	// TODO: Nested Directories
+	/*for (int i=0; i<count_l(path)) {
+	}*/
+	printf("mkdir(%s) -> %d\n", path, rv);
+	return rv;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -242,8 +249,8 @@ main(int argc, char *argv[])
 	readdir("/");
 	read("/hello.txt", buf, 0, 0);
 	printf("%s\n", buf);	// hello!
-	//mknod("/dir/newmsg.txt", 755);
-	//write("/dir/newmsg.txt", "newmsg!", 6, 0);
+	mknod("/dir/newmsg.txt", 755);
+	write("/dir/newmsg.txt", "newmsg!", 6, 0);
 	//read("/dir/newmsg.txt", buf, 0, 0);
 	printf("reading root\n");
 	readdir("/");
