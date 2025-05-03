@@ -97,23 +97,27 @@ mk_loop:
 	p1 = (dirent*)((char*)get_root_start()+p->ptrs[1]);
 	w = (dirent*)((char*)get_root_start()+n->ptrs[0]);
 	if (!strcmp(p0->name, "*")) {
-		//printf("found stop!\n");
+		printf("p0: found stop!\n");
 		strcpy(stop.name, "*");
 		memcpy(p0, &data, sizeof(data));
 		p->ptrs[1] = n->ptrs[0];
 		n->ptrs[0] += sizeof(stop);
 		memcpy(w, &stop, sizeof(stop));	
 	} else if (p0->active==false) {
+		printf("p0: found empty!\n");
 		memcpy(p0, &data, sizeof(data));
 	} else if (p1->active==false) {
+		printf("p1: found empty!\n");
 		memcpy(p1, &data, sizeof(data));
 	} else if (!strcmp(p1->name, "*")) {
+		printf("p1: found empty!\n");
 		memcpy(p1, &data, sizeof(data));
 		if (n->iptr==0) n->iptr = inode_find("*");
 		get_inode(n->iptr)->ptrs[0] = n->ptrs[0];
 		n->ptrs[0] += sizeof(data);
 		memcpy(w, &data, sizeof(data));
 	} else {
+		printf("found none, getting next inode!\n");
 		p = get_inode(p->iptr);
 		goto mk_loop;
 	}
@@ -166,7 +170,8 @@ write_loop:
     	//data0[0]='\0';	//TODO : Worry about write collision later...
     	if (n->size[0] > 0) {
     		strncpy(data0, buf, n->size[0]);
-    		strncat(data1 + (int)n->size, buf+n->size[0], n->size[1]);
+    		strncat(data1 + (int)n->size[0], buf+n->size[0], n->size[1]);
+    		strncat(data1 + (int)n->size[0] + (int)n->size[1], "\0", 1);
     		n->size[1]=p1;
     		n->ptrs[0] = h->ptrs[0];
     		h->ptrs[0] += n->size[0];
@@ -174,6 +179,7 @@ write_loop:
     		h->ptrs[0] += n->size[1];
     	} else {
     		strncpy(data0, buf, size);
+    		strncat(data0, "\0", 1);
     		n->size[0]=size;
     		n->ptrs[0] = h->ptrs[0];
     		h->ptrs[0] += size;
@@ -239,5 +245,7 @@ main(int argc, char *argv[])
 	readdir("/dir");
 	mkdir("/dir/dir", 755);
 	readdir("/dir");
+	//read("/hello.txt", buf, 0, 0);
+	//printf("%s\n", buf);	// hello!
 	pages_free();
 }
