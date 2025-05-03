@@ -80,14 +80,14 @@ readdir(const char *path)
 }
 
 int
-mknod(const char *path, int mode)
+_mknod(const char *path, int mode, int k)
 {
     int rv = 0;
     int count = 0;
     int l = inode_find(path);
     inode *n = get_inode(1);
     printf("find_parent(path) = %d\n", find_parent(path));
-    inode *p = get_inode(find_parent(path));	// <- parent directory
+    inode *p = get_inode(k);	// <- parent directory
     inode *h = get_inode(l);
     dirent *p0, *p1, *w;
     dirent data;
@@ -95,7 +95,6 @@ mknod(const char *path, int mode)
     strcpy(data.name, path);
     h->mode=mode;
     data.active=true;
-mk_loop:
 	p0 = (dirent*)((char*)get_root_start()+p->ptrs[0]);
 	p1 = (dirent*)((char*)get_root_start()+p->ptrs[1]);
 	w = (dirent*)((char*)get_root_start()+n->ptrs[0]);
@@ -112,21 +111,26 @@ mk_loop:
 	} else if (p1->active==false) {
 		printf("p1: found empty!\n");
 		memcpy(p1, &data, sizeof(data));
-	} else*/ if (!strcmp(p1->name, "*")) {
+	}*/ else if (!strcmp(p1->name, "*")) {
 		printf("p1: found stop!\n");
 		memcpy(p1, &data, sizeof(data));
 		p->iptr = inode_find("*");
 		get_inode(p->iptr)->ptrs[0] = n->ptrs[0];
 		n->ptrs[0] += sizeof(data);
 		memcpy(w, &stop, sizeof(stop));
-	} /*else {
+	} else {
 		printf("found none, getting next inode!\n");
-		p = get_inode(p->iptr);
-		goto mk_loop;
-	}*/
+		_mknod(path, mode, p->iptr);
+	}
 	printf("p1: %s\n", p1->name);
     printf("mknod(%s) -> %d\n", path, rv);
     return rv;
+}
+
+int
+mknod(const char *path, int mode)
+{
+	return _mknod(path, mode, find_parent(path));
 }
 
 // most of the following callbacks implement
@@ -245,6 +249,8 @@ main(int argc, char *argv[])
 	readdir("/");
 	printf("reading /dir\n");
 	readdir("/dir");
+	read("/hello.txt", buf, 0, 0);
+	printf("%s\n", buf);	// hello!
 	//printf("%s\n", buf);	// newmsg!
 	//mknod("/dir/two.txt", 755);
 	//write("/dir/two.txt", "two!", 6, 0);
